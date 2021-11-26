@@ -1,11 +1,11 @@
 /* eslint-disable react/jsx-key */
-import React from 'react';
+import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 
 import clsx from 'clsx';
 
 import { connect } from 'react-redux';
-import { getAllPosts, getPublishedPosts,  getMyPosts, getLoggedUser, getStatusDisplay } from '../../../redux/postsRedux.js';
+import { fetchPosts, getPosts, getLoggedUser, getStatusDisplay, getStatusLoading } from '../../../redux/postsRedux.js';
 import {Post} from '../Post/Post.js';
 import styles from './Homepage.module.scss';
 import Button from '@material-ui/core/Button';
@@ -21,25 +21,37 @@ const useStyles = makeStyles({
   },
 });
 
-const Component = function({className, children, posts, publishedPosts, myPosts, loggedUser,display }){
+const Component = function({className, children, posts, loggedUser,display, fetchPosts, loading }){
   const classes = useStyles();
+ 
+  useEffect(() => {
+    const getResult = async () =>{
+      await fetchPosts();
+    };
+    getResult();
+  }, [fetchPosts]);
 
-  if(loggedUser && display) return (
+  if(loggedUser && display && !loading) return (
     <div className={clsx(className, styles.root)}>
       <Button className={classes.addNew} component={Link} to={'/post/add'} variant="contained" color="primary" >Add new post</Button>
       {
-        myPosts.map( post => 
-          <Post post={post}/>
-        )
+        posts && posts.length > 0 ? posts.map( post => post.author == loggedUser ?
+          <Post post={post}/>:''
+         ):''
       }
     </div>      
+  );
+  else if (loading) return (
+    <div className={clsx(className, styles.root)}>
+      Connection faild
+    </div>
   );
   else return (
     <div className={clsx(className, styles.root)}>
       {
-        publishedPosts.map( post => 
-          <Post post={post}/>
-        )
+        posts && posts.length > 0 ? posts.map( post => post.status == 'published' ?
+          <Post post={post}/>:''
+        ):''
       }
     </div>  
   );
@@ -48,26 +60,25 @@ const Component = function({className, children, posts, publishedPosts, myPosts,
 Component.propTypes = {
   children: PropTypes.node,
   className: PropTypes.string,
-  posts: PropTypes.array,
-  publishedPosts: PropTypes.array,
-  myPosts: PropTypes.array,
+  posts: PropTypes.any,
   loggedUser: PropTypes.string,
   display: PropTypes.bool,
+  fetchPosts: PropTypes.func,
+  loading: PropTypes.bool,
 };
 
 const mapStateToProps = state => ({
-  publishedPosts: getPublishedPosts(state),
-  posts: getAllPosts(state),
-  myPosts:getMyPosts(state),
+  posts: getPosts(state),
   loggedUser: getLoggedUser(state),
   display: getStatusDisplay(state),
+  loading: getStatusLoading(state),
 });
 
-// const mapDispatchToProps = dispatch => ({
-//   someAction: arg => dispatch(reduxActionCreator(arg)),
-// });
+const mapDispatchToProps = dispatch => ({
+  fetchPosts: () => dispatch(fetchPosts()),
+});
 
-const Container = connect(mapStateToProps/*, mapDispatchToProps*/)(Component);
+const Container = connect(mapStateToProps, mapDispatchToProps)(Component);
 
 export {
   //Component as Homepage,

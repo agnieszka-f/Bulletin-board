@@ -1,16 +1,18 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
-
+import { useHistory } from "react-router";
 import clsx from 'clsx';
 
 import { connect } from 'react-redux';
-import { getPost,getLoggedUser } from '../../../redux/postsRedux.js';
+import { getPost,getLoggedUser, fetchPost, updatePost } from '../../../redux/postsRedux.js';
 
 import styles from './PostEdit.module.scss';
 import { makeStyles } from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import {NotFound} from '../NotFound/NotFound';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
 
 const useStyles = makeStyles({
   root: {
@@ -27,22 +29,51 @@ const useStyles = makeStyles({
   },
 });
 
-const Component = function ({className, children, post, loggedUser}){
+const Component = function ({className, children, post, loggedUser, fetchPost, match, updatePost}){
   const classes = useStyles();
+
+  useEffect(() => {
+    const getResult = async () =>{
+      await fetchPost(match.params.id);
+    };
+    getResult(); 
+  }, [fetchPost]);
+  
+  const [fields, setFields] = useState({});
+
+  const fieldChange = function(e){ 
+    if(typeof e.target.id == 'undefined'){
+      setFields({...fields, [e.target.name]: e.target.value});
+    } else{
+      setFields({...fields, [e.target.id]: e.target.value});
+    }
+  }
+  
+  const history = useHistory();
+
+  const handleClick = () => {
+      updatePost({...fields, updated: new Date(Date.now()).toISOString() });
+      history.push('/post/'+post._id);
+  }
 
   return(
     <div className={clsx(className, styles.root)}>
       {post && loggedUser ?
       
         <form noValidate autoComplete="off" className={classes.root}>
-          <TextField className={classes.item} id="title" label="Title" variant="outlined" defaultValue={post.title} required fullWidth multiline/>
-          <TextField className={classes.item} id="content" label="Content" variant="outlined" defaultValue={post.content} required fullWidth multiline/>
-          <TextField className={classes.item} id="email" label="Email" variant="outlined" defaultValue={post.email} required fullWidth/>
-          <TextField className={classes.item} id="photo" label="Link to photo" variant="outlined" defaultValue={post.image}  fullWidth multiline/>
-          <TextField className={classes.item} id="price" label="Price" variant="outlined" defaultValue={post.price}  fullWidth/>
-          <TextField className={classes.item} id="phone" label="Phone number" variant="outlined" defaultValue={post.phone}  fullWidth/>  
-          <TextField className={classes.item} id="location" label="Location" variant="outlined" defaultValue={post.location}  fullWidth/>    
-          <Button className={classes.submitButton} variant="contained" color="primary" type='submit'>Save</Button>
+          <TextField className={classes.item} onChange={(e) => fieldChange(e)} id="title" label="Title" variant="outlined" defaultValue={post.title} required fullWidth multiline/>
+          <TextField className={classes.item} onChange={(e) => fieldChange(e)} id="text" label="Text" variant="outlined" defaultValue={post.text} required fullWidth multiline/>
+          <TextField className={classes.item} onChange={(e) => fieldChange(e)} id="author" label="Email" variant="outlined" defaultValue={post.author} disabled fullWidth/>
+          <TextField className={classes.item} onChange={(e) => fieldChange(e)} id="photo" label="Link to photo" variant="outlined" defaultValue={post.photo}  fullWidth multiline/>
+          <TextField className={classes.item} onChange={(e) => fieldChange(e)} id="price" label="Price" variant="outlined" defaultValue={post.price}  fullWidth/>
+          <TextField className={classes.item} onChange={(e) => fieldChange(e)} id="phone" label="Phone number" variant="outlined" defaultValue={post.phone}  fullWidth/>  
+          <TextField className={classes.item} onChange={(e) => fieldChange(e)} id="location" label="Location" variant="outlined" defaultValue={post.location}  fullWidth/>  
+          <Select className={classes.item} onChange={(e) => fieldChange(e)} labelId="Status" id="status" name="status" defaultValue={post.status}  fullWidth variant="outlined" required >
+            <MenuItem id="status" value={'draft'} >Draft</MenuItem>
+            <MenuItem id="status" value={'published'} >Published</MenuItem>
+            <MenuItem id="status" value={'close'} >Close</MenuItem>
+           </Select>  
+          <Button className={classes.submitButton} onClick={() => handleClick() } variant="contained" color="primary" type='submit'>Save</Button>
         </form>
         : <NotFound />} </div>
   );
@@ -53,18 +84,20 @@ Component.propTypes = {
   className: PropTypes.string,
   post: PropTypes.object,
   loggedUser: PropTypes.string,
+  fetchPost: PropTypes.func,
 };
 
 const mapStateToProps = (state,props) => ({
-  post: getPost(state, props.match.params.id),
+  post: getPost(state),
   loggedUser: getLoggedUser(state),
 });
 
-// const mapDispatchToProps = dispatch => ({
-//   someAction: arg => dispatch(reduxActionCreator(arg)),
-// });
+const mapDispatchToProps = dispatch => ({
+  fetchPost: id => dispatch(fetchPost(id)),
+  updatePost: data => dispatch(updatePost(data)),
+});
 
-const Container = connect(mapStateToProps/*, mapDispatchToProps*/)(Component);
+const Container = connect(mapStateToProps, mapDispatchToProps)(Component);
 
 export {
   //Component as PostEdit,

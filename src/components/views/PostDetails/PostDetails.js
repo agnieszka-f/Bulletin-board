@@ -1,10 +1,10 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 
 import clsx from 'clsx';
 
 import { connect } from 'react-redux';
-import { getPost, getLoggedUser } from '../../../redux/postsRedux.js';
+import { getPost, fetchPost, getLoggedUser } from '../../../redux/postsRedux.js';
 
 import styles from './PostDetails.module.scss';
 
@@ -33,28 +33,41 @@ const useStyles = makeStyles({
   },
 });
 
-const Component = function({className, children, post, loggedUser}){
+const getStringDate = function(postDate){
+  const date = new Date(postDate); 
+  return date.getFullYear().toString() + '-' + date.getMonth().toString().padStart(2,'0') + '-' + date.getDate().toString().padStart(2,'0');
+}
+
+const Component = function({className, children, post, loggedUser, fetchPost, match}){
   const classes = useStyles();
 
+   useEffect(() => {
+    const getResult = async () =>{
+      await fetchPost(match.params.id);
+    };
+    getResult(); 
+  }, [fetchPost]);
+ 
   return (
     post ?
       <div className={clsx(className, styles.root)}>
         <Card className={classes.root}>
-          {post.image ? <CardMedia
+          {post.photo ? <CardMedia
             component="img"
             alt="Contemplative Reptile"
             height="300"
-            image={post.image}
+            image={post.photo}
           />:''}
           <CardContent>
             <div className={classes.postTitle}>
               <Typography gutterBottom variant="h5" component="h2">
                 {post.title}
               </Typography>
-              <Typography variant="subtitle2" color="textSecondary">Created: {post.created.getFullYear().toString() + '-' + post.created.getMonth().toString().padStart(2,'0') + '-' + post.created.getDate().toString().padStart(2,'0')}</Typography>           
+              <Typography variant="subtitle2" color="textSecondary">
+                Created: {getStringDate(post.created)}</Typography>           
             </div>
             <Typography gutterBottom variant="body2" color="textSecondary" component="p">
-              {post.content}
+              {post.text}
             </Typography>
             <div className={classes.postInfo}>
               {
@@ -63,17 +76,22 @@ const Component = function({className, children, post, loggedUser}){
               {
                 post.location ? <Typography variant="subtitle2">Location: {post.location}</Typography>:''
               }
-              <Typography variant="subtitle2">Contact: {post.email}</Typography>
-
+              <Typography variant="subtitle2">Contact: {post.author}</Typography>
+              <Typography variant="subtitle2" color="textSecondary">
+                Last update: {getStringDate(post.updated)}</Typography>
+                <Typography variant="subtitle2" color="textSecondary">
+                Status: {post.status}</Typography>
             </div>
           </CardContent>
-          <CardActions>
-            {
-              loggedUser && loggedUser == post.autor ? <Button component={Link} to={'/post/' + post.id + '/edit'} size="small" color="primary">
-          Edit 
-              </Button>:''
-            }
-          </CardActions>
+          <div className={classes.postFlex}>
+            <CardActions>
+              {
+                loggedUser && loggedUser == post.author ? <Button component={Link} to={'/post/' + post._id + '/edit'} size="small" color="primary">
+            Edit 
+                </Button>:''
+              }
+            </CardActions>
+          </div>
         </Card>
       </div> : <NotFound />
   );
@@ -84,18 +102,20 @@ Component.propTypes = {
   className: PropTypes.string,
   post: PropTypes.object,
   loggedUser: PropTypes.string,
+  fetchPost: PropTypes.func,
 };
 
 const mapStateToProps = (state, props) => ({
-  post: getPost(state, props.match.params.id),
+  //post: getPost(state, props.match.params.id),
+  post: getPost(state),
   loggedUser: getLoggedUser(state),
 });
 
-// const mapDispatchToProps = dispatch => ({
-//   someAction: arg => dispatch(reduxActionCreator(arg)),
-// });
+const mapDispatchToProps = dispatch => ({
+  fetchPost: id => dispatch(fetchPost(id)),
+});
 
-const Container = connect(mapStateToProps/*, mapDispatchToProps*/)(Component);
+const Container = connect(mapStateToProps, mapDispatchToProps)(Component);
 
 export {
   //Component as PostDetails,

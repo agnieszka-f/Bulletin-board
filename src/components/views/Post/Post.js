@@ -37,6 +37,11 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+const getStringDate = function(postDate){
+  const date = new Date(postDate); 
+  return date.getFullYear().toString() + '-' + date.getMonth().toString().padStart(2,'0') + '-' + date.getDate().toString().padStart(2,'0');
+}
+
 const Component = function ({className, children, post}){
   const classes = useStyles();
   return (
@@ -44,9 +49,11 @@ const Component = function ({className, children, post}){
       <Paper className={classes.paper}>
         <Grid container spacing={2}>
           <Grid item>
-            <ButtonBase className={classes.image} component={Link} to={'/post/' + post.id}>
-              <img className={classes.img} alt="complex" src={post.image} />
-            </ButtonBase>
+           {
+             post.photo ? <ButtonBase className={classes.image} component={Link} to={'/post/' + post._id}>
+             <img className={classes.img} alt="complex" src={post.photo} />
+           </ButtonBase> : ''
+           }
           </Grid>
           <Grid item xs={12} sm container>
             <Grid item xs container direction="column" spacing={2}>
@@ -55,15 +62,15 @@ const Component = function ({className, children, post}){
                   {post.title}
                 </Typography>
                 <Typography variant="body2" gutterBottom>
-                  {post.content.length > 100 ? post.content.substr(0, post.content.lastIndexOf(' ', 200)) + '...' : post.content}
+                  {post.text.length > 100 ? post.text.substr(0, post.text.lastIndexOf(' ', 200)) + '...' : post.text}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
-                  {post.location ? post.location + ', ':''}
-                  {post.created.getFullYear().toString() + '-' + post.created.getMonth().toString().padStart(2,'0') + '-' + post.created.getDate().toString().padStart(2,'0')}
+                  {post.location ? post.location + ', ':''} 
+                  {getStringDate(post.created)}
                 </Typography>
               </Grid>
               <Grid item>
-                <Link to={'/post/' + post.id}>Read more...</Link>                
+                <Link to={'/post/' + post._id}>Read more...</Link>                
               </Grid>
             </Grid>
             <Grid item>
