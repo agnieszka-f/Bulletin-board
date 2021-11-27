@@ -38,15 +38,15 @@ const getStringDate = function(postDate){
   return date.getFullYear().toString() + '-' + date.getMonth().toString().padStart(2,'0') + '-' + date.getDate().toString().padStart(2,'0');
 }
 
-const Component = function({className, children, post, loggedUser, fetchPost, match}){
+const Component = function({className, children, post, loggedUser, fetchPost, match: { params: {id}}}){
   const classes = useStyles();
 
    useEffect(() => {
     const getResult = async () =>{
-      await fetchPost(match.params.id);
+      await fetchPost(id);
     };
     getResult(); 
-  }, [fetchPost]);
+  }, [fetchPost, id]);
  
   return (
     post ?
@@ -100,9 +100,10 @@ const Component = function({className, children, post, loggedUser, fetchPost, ma
 Component.propTypes = {
   children: PropTypes.node,
   className: PropTypes.string,
-  post: PropTypes.object,
+  post: PropTypes.any,
   loggedUser: PropTypes.string,
   fetchPost: PropTypes.func,
+  id: PropTypes.string,
 };
 
 const mapStateToProps = (state, props) => ({

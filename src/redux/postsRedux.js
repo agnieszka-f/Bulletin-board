@@ -22,6 +22,7 @@ const FETCH_ERROR = createActionName('FETCH_ERROR');
 const TOGGLE_LOGGING_USER =  createActionName('TOGGLE_LOGGING_USER');
 const SHOW_MY_POSTS = createActionName('SHOW_MY_POSTS');
 
+const NEW_POST = createActionName('NEW_POST');
 /* action creators */
 export const fetchStarted = payload => ({ payload, type: FETCH_START });
 export const fetchSuccess = payload => ({ payload, type: FETCH_SUCCESS });
@@ -30,12 +31,16 @@ export const fetchError = payload => ({ payload, type: FETCH_ERROR });
 export const toggleLoggingUser = payload => ({ payload, type: TOGGLE_LOGGING_USER });
 export const showMyPosts = payload => ({ payload, type: SHOW_MY_POSTS });
 
+export const newPost = payload => ({payload, type: NEW_POST})
+
 /* thunk creators */
 export const fetchPosts = () => {
   return (dispatch, getState) => { 
     dispatch(fetchStarted());
-
-    Axios
+    
+    if(typeof getState.posts == 'undefined' || typeof getState.posts.data == 'undefined' || getState.posts.data.length < 1){
+        
+      Axios
       .get('http://localhost:8000/api/posts')
       .then(res => {
         dispatch(fetchSuccess(res.data));
@@ -43,12 +48,13 @@ export const fetchPosts = () => {
       .catch(err => {
         dispatch(fetchError(err.message || true));
       });
+    }
   };
 };
 
 export const updatePost = (data) => { 
   return (dispatch, getState) => { 
-    const post = getState().posts.data; 
+    const post = getState().posts.data;
       Axios
         .put('http://localhost:8000/api/posts/' + post._id, {...post, ...data})
         .then(res => { 
@@ -81,7 +87,7 @@ export const createPost = (data) => {
       Axios
         .post('http://localhost:8000/api/posts', data)
         .then(res => { 
-          dispatch(fetchSuccess(res.data));
+          dispatch(newPost(res.data));
         })
         .catch(err => {
           dispatch(fetchError(err.message || true));
@@ -127,6 +133,15 @@ export const reducer = (statePart = [], action = {}) => {
     case SHOW_MY_POSTS: { 
       return {
         ...statePart, myPosts: action.payload,
+      };
+    }
+    case NEW_POST: { 
+      return { 
+        ...statePart, data: [...statePart.data, action.payload],
+        loading: {
+          active: false,
+          error: false,
+        },
       };
     }
     default:

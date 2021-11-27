@@ -29,7 +29,7 @@ router.get('/posts/:id', async (req, res) => {
   }
 });
 
-router.put('/posts/:id', async (req, res) => {
+router.put('/posts/:id', async (req, res) => { console.log('ser',req.body);
   const {author, created, updated, status, title, text, photo, price, phone, location} = req.body;
   
   try {

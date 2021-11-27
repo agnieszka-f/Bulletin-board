@@ -34,20 +34,22 @@ const useStyles = makeStyles({
 const Component = function({className, children,loggedUser, createPost}) {
   const classes = useStyles();
 
-  const [fields, setFields] = useState({});
+  const [fields, setFields] = useState({author:loggedUser, price: 0});
+  
+  const [status, setStatus] = useState('');
+
+  const handleChange = (event) => {
+    setStatus(event.target.value);
+  };
 
   const fieldChange = function(e){ 
-    if(typeof e.target.id == 'undefined'){
-      setFields({...fields, [e.target.name]: e.target.value});
-    } else{
       setFields({...fields, [e.target.id]: e.target.value});
-    }
   }
 
   const history = useHistory();
 
   const handleClick = () => {  
-      createPost({...fields, author:loggedUser, created: new Date(Date.now()).toISOString(), updated: new Date(Date.now()).toISOString()});
+      createPost({...fields, status, created: new Date(Date.now()).toISOString(), updated: new Date(Date.now()).toISOString()});
       history.push('/');
   }
 
@@ -56,14 +58,14 @@ const Component = function({className, children,loggedUser, createPost}) {
   <form noValidate autoComplete="off" className={classes.root}>
           <TextField className={classes.item} onChange={(e) => fieldChange(e)} id="title" label="Title" variant="outlined"  required fullWidth multiline/>
           <TextField className={classes.item} onChange={(e) => fieldChange(e)} id="text" label="Text" variant="outlined" required fullWidth multiline/>
-          <TextField className={classes.item} onChange={(e) => fieldChange(e)} id="author" label="Email" variant="outlined" defaultValue={loggedUser} disabled fullWidth/>
+          <TextField className={classes.item} onChange={(e) => fieldChange(e)} id="author" label="Email" variant="outlined" defaultValue={loggedUser || ''} disabled fullWidth/>
           <TextField className={classes.item} onChange={(e) => fieldChange(e)} id="photo" label="Link to photo" variant="outlined"  fullWidth multiline/>
-          <TextField className={classes.item} onChange={(e) => fieldChange(e)} id="price" label="Price" variant="outlined"  fullWidth/>
+          <TextField className={classes.item} onChange={(e) => fieldChange(e)} id="price" label="Price" defaultValue={0} variant="outlined"  fullWidth/>
           <TextField className={classes.item} onChange={(e) => fieldChange(e)} id="phone" label="Phone number" variant="outlined"   fullWidth/>  
           <TextField className={classes.item} onChange={(e) => fieldChange(e)} id="location" label="Location" variant="outlined"   fullWidth/>  
-          <Select className={classes.item} onChange={(e) => fieldChange(e)} labelId="Status" id="status" name="status"   fullWidth variant="outlined" required >
+          <Select className={classes.item} label="Status" id="status" name="status" value={status} onChange={handleChange} fullWidth variant="outlined" required >
             <MenuItem id="status" value={'draft'} >Draft</MenuItem>
-            <MenuItem id="status" value={'published'} >Published</MenuItem>
+            <MenuItem id="status" value={'published'} selected >Published</MenuItem>
             <MenuItem id="status" value={'close'} >Close</MenuItem>
            </Select>  
           <Button className={classes.submitButton} onClick={(e) => handleClick(e) } variant="contained" color="primary" type='submit'>Create</Button>

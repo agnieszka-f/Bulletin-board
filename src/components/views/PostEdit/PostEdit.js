@@ -29,30 +29,31 @@ const useStyles = makeStyles({
   },
 });
 
-const Component = function ({className, children, post, loggedUser, fetchPost, match, updatePost}){
+const Component = function ({className, children, post, loggedUser, fetchPost, match: { params: {id}}, updatePost}){
   const classes = useStyles();
 
   useEffect(() => {
     const getResult = async () =>{
-      await fetchPost(match.params.id);
+      await fetchPost(id);
     };
     getResult(); 
-  }, [fetchPost]);
+  }, [fetchPost, id]);
   
-  const [fields, setFields] = useState({});
+  const [fields, setFields] = useState({author:loggedUser});
 
+  const [status, setStatus] = useState(post.status);
+
+  const handleChange = (event) => {
+    setStatus(event.target.value);
+  };
   const fieldChange = function(e){ 
-    if(typeof e.target.id == 'undefined'){
-      setFields({...fields, [e.target.name]: e.target.value});
-    } else{
-      setFields({...fields, [e.target.id]: e.target.value});
-    }
+    setFields({...fields, [e.target.id]: e.target.value});
   }
   
   const history = useHistory();
 
   const handleClick = () => {
-      updatePost({...fields, updated: new Date(Date.now()).toISOString() });
+      updatePost({...fields, status, updated: new Date(Date.now()).toISOString() });
       history.push('/post/'+post._id);
   }
 
@@ -68,11 +69,11 @@ const Component = function ({className, children, post, loggedUser, fetchPost, m
           <TextField className={classes.item} onChange={(e) => fieldChange(e)} id="price" label="Price" variant="outlined" defaultValue={post.price}  fullWidth/>
           <TextField className={classes.item} onChange={(e) => fieldChange(e)} id="phone" label="Phone number" variant="outlined" defaultValue={post.phone}  fullWidth/>  
           <TextField className={classes.item} onChange={(e) => fieldChange(e)} id="location" label="Location" variant="outlined" defaultValue={post.location}  fullWidth/>  
-          <Select className={classes.item} onChange={(e) => fieldChange(e)} labelId="Status" id="status" name="status" defaultValue={post.status}  fullWidth variant="outlined" required >
+          <Select className={classes.item} label="Status" id="status" name="status" value={status} onChange={handleChange} fullWidth variant="outlined" required >
             <MenuItem id="status" value={'draft'} >Draft</MenuItem>
-            <MenuItem id="status" value={'published'} >Published</MenuItem>
+            <MenuItem id="status" value={'published'} selected >Published</MenuItem>
             <MenuItem id="status" value={'close'} >Close</MenuItem>
-           </Select>  
+           </Select> 
           <Button className={classes.submitButton} onClick={() => handleClick() } variant="contained" color="primary" type='submit'>Save</Button>
         </form>
         : <NotFound />} </div>
@@ -85,6 +86,7 @@ Component.propTypes = {
   post: PropTypes.object,
   loggedUser: PropTypes.string,
   fetchPost: PropTypes.func,
+  id: PropTypes.string,
 };
 
 const mapStateToProps = (state,props) => ({
